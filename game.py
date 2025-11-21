@@ -1,189 +1,152 @@
+# ============================================
+# game.py
+# Main game loop with:
+# - suspect interaction
+# - confrontation detection
+# - emotional tier escalation
+# - Gemini LLM calls
+# ============================================
+
 import os
-from google import genai
 from dotenv import load_dotenv
+from suspects import SUSPECTS
+from behavior_engine import detect_confrontation, update_emotional_tier, build_prompt
 
+# --------------------------------------------
+# Load API KEY
+# --------------------------------------------
 load_dotenv()
-
+from google import genai
 client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
 
-
-# TODO: import whatever you used to talk to Gemini.
-# For example, if you made a helper in test_agent.py, you might do:
-# from test_agent import call_gemini
-
-# For now, I'll assume you will implement this function using your existing ADK code.
-def call_gemini(prompt: str, history: list[str]) -> str:
-    """
-    Replace this with your actual Gemini ADK call.
-    `history` is a list of previous messages in this conversation with this suspect.
-    Return the model's reply as plain text.
-    """
+# --------------------------------------------
+# Gemini call function
+# --------------------------------------------
+def call_gemini(prompt: str) -> str:
+    """Sends the prompt to Gemini and returns text response."""
     response = client.models.generate_content(
         model="gemini-2.0-flash",
-        contents=prompt,
+        contents=prompt
     )
     return response.text
 
 
-# ---------- GAME DATA ----------
-
-CASE = {
-    "victim": "Dr. Arjun Mehta, 42, renowned cardiologist at Silverline Hospital.",
-    "scene": "He was found dead in his private clinic late at night. The room was messy, one window slightly open, a coffee mug on the table, and a broken photo frame on the floor.",
-    "time": "Body discovered at 11:30 PM by the night security guard.",
+# --------------------------------------------
+# Game state (emotional tiers for each suspect)
+# --------------------------------------------
+suspect_state = {
+    "Nisha": 0,
+    "Kabir": 0,
+    "Rohit": 0
 }
 
-SUSPECTS = [
-    {
-        "id": 1,
-        "name": "Nisha Mehta",
-        "role": "Victim's wife",
-        "bio": "Runs a boutique. Recently seen arguing with the victim about money.",
-        "is_killer": False,
-        "secret": "She was planning to file for divorce but didn’t want it public yet.",
-    },
-    {
-        "id": 2,
-        "name": "Rohit Sharma",
-        "role": "Junior doctor",
-        "bio": "Ambitious, talented, and often overshadowed by the victim.",
-        "is_killer": True,  # <- The actual murderer
-        "secret": "He tampered with some records and feared the victim would expose him.",
-    },
-    {
-        "id": 3,
-        "name": "Kabir Rao",
-        "role": "Hospital administrator",
-        "bio": "Handles finances, under pressure due to audits.",
-        "is_killer": False,
-        "secret": "Has been embezzling small amounts of money but unrelated to the murder.",
-    },
-]
 
-
-# Each suspect has their own conversation history so they stay consistent.
-conversation_histories: dict[int, list[str]] = {s["id"]: [] for s in SUSPECTS}
-
-
-def build_suspect_prompt(suspect: dict, player_message: str) -> str:
-    """
-    Build a detailed prompt that tells Gemini:
-    - Who the suspect is
-    - The case background
-    - Whether they are the killer
-    - What their personality is
-    - What the player just asked
-    """
-    guilt_text = (
-        "You ARE the murderer. You must hide this fact but your answers may contain subtle slips if the player is clever."
-        if suspect["is_killer"]
-        else "You are NOT the murderer. You should defend yourself, but you might still look suspicious."
-    )
-
-    prompt = f"""
-You are roleplaying as a suspect in a murder mystery game.
-
-CASE DETAILS:
-- Victim: {CASE["victim"]}
-- Scene: {CASE["scene"]}
-- Time: {CASE["time"]}
-
-YOUR CHARACTER:
-- Name: {suspect["name"]}
-- Role: {suspect["role"]}
-- Background: {suspect["bio"]}
-- Hidden secret (don't state directly unless heavily pressured): {suspect["secret"]}
-- Truth about guilt: {guilt_text}
-
-ROLEPLAY RULES:
-- Answer ONLY as {suspect["name"]}. Stay in first person.
-- Keep responses between 2–5 sentences.
-- You can lie, deflect, or get emotional, but stay consistent with your story.
-- Reveal hints gradually. Don't confess immediately even if you are guilty.
-- If asked directly about the murder, respond in character, staying believable.
-
-PLAYER QUESTION:
-{player_message}
-"""
-    return prompt.strip()
-
-
+# --------------------------------------------
+# Suspect selection UI
+# --------------------------------------------
 def list_suspects():
     print("\nSuspects:")
-    for s in SUSPECTS:
-        print(f"{s['id']}. {s['name']} – {s['role']}")
+    print("1. Nisha Mehta – Victim's wife")
+    print("2. Rohit Sharma – Junior doctor")
+    print("3. Kabir Rao – Hospital administrator")
     print()
 
 
-def choose_suspect() -> dict:
+def choose_suspect():
     while True:
         list_suspects()
         choice = input("Talk to which suspect? (1/2/3, or 'q' to stop questioning): ").strip()
+
         if choice.lower() == "q":
             return None
-        try:
-            cid = int(choice)
-            suspect = next((s for s in SUSPECTS if s["id"] == cid), None)
-            if suspect:
-                return suspect
-            else:
-                print("Invalid suspect, try again.")
-        except ValueError:
-            print("Please enter a number.")
+
+        if choice in ["1", "2", "3"]:
+            mapping = {"1": "Nisha", "2": "Rohit", "3": "Kabir"}
+            return mapping[choice]
+
+        print("Invalid choice. Try again.")
 
 
-def question_suspect(suspect: dict):
-    sid = suspect["id"]
-    history = conversation_histories[sid]
-
-    print(f"\nYou are now talking to {suspect['name']} ({suspect['role']}).")
-    print("Type your questions. Type 'back' to stop talking to this suspect.\n")
+# --------------------------------------------
+# Interrogation loop
+# --------------------------------------------
+def question_suspect(name: str):
+    print(f"\nYou are now talking to {name}. Type your questions.\nType 'back' to stop.\n")
 
     while True:
-        player_msg = input("You: ").strip()
-        if player_msg.lower() in {"back", "exit"}:
-            print(f"Leaving {suspect['name']}.\n")
+        player_message = input("You: ").strip()
+
+        if player_message.lower() == "back":
+            print(f"\nLeaving {name}.\n")
             break
 
-        history.append(f"Player: {player_msg}")
-        prompt = build_suspect_prompt(suspect, player_msg)
+        # 1) Detect confrontation
+        ct = detect_confrontation(player_message)
 
-        # Call Gemini
-        reply = call_gemini(prompt, history)
+        # 2) Update emotional tier
+        suspect_state[name] = update_emotional_tier(name, suspect_state[name])
 
-        history.append(f"{suspect['name']}: {reply}")
-        print(f"{suspect['name']}: {reply}\n")
+        # 3) Build LLM prompt
+        prompt = build_prompt(
+            name,
+            emotional_tier=suspect_state[name],
+            ct=ct,
+            player_message=player_message
+        )
+
+        # 4) Call Gemini
+        reply = call_gemini(prompt)
+
+        # 5) Print response
+        print(f"{name}: {reply}\n")
 
 
+# --------------------------------------------
+# Accuse mechanic
+# --------------------------------------------
 def accuse():
     print("\nTime to make your accusation!")
-    list_suspects()
-    choice = input("Who do you think is the killer? (1/2/3): ").strip()
-    try:
-        cid = int(choice)
-        suspect = next((s for s in SUSPECTS if s["id"] == cid), None)
-        if not suspect:
-            print("Invalid choice.")
-            return
+    print("Who do you think is the killer?\n")
+    print("1. Nisha")
+    print("2. Rohit")
+    print("3. Kabir\n")
 
-        killer = next(s for s in SUSPECTS if s["is_killer"])
-        if suspect["id"] == killer["id"]:
-            print(f"\nCorrect! {suspect['name']} was indeed the killer.")
-        else:
-            print(f"\nWrong! You accused {suspect['name']}, but the real killer was {killer['name']}.")
-        print("Game over.")
-    except ValueError:
-        print("That wasn't a valid number.")
-    except StopIteration:
-        print("Configuration error: no killer defined.")
+    choice = input("Your accusation (1/2/3): ").strip()
+
+    mapping = {"1": "Nisha", "2": "Rohit", "3": "Kabir"}
+
+    if choice not in mapping:
+        print("Invalid choice. Returning to menu.\n")
+        return
+
+    accused = mapping[choice]
+
+    # Identify the real killer
+    killer = None
+    for s in SUSPECTS:
+        if SUSPECTS[s]["is_killer"]:
+            killer = s
+            break
+
+    print("\n=== VERDICT ===")
+
+    if accused == killer:
+        print(f"Correct! {accused} was indeed the killer.\n")
+    else:
+        print(f"Wrong! You accused {accused}, but the real killer was {killer}.\n")
+
+    print("Game Over.\n")
 
 
+# --------------------------------------------
+# Main Game Loop
+# --------------------------------------------
 def main():
-    print("=== Murder Mystery: The Clinic Case ===")
-    print("\nCASE BRIEF:")
-    print(f"- Victim: {CASE['victim']}")
-    print(f"- Scene: {CASE['scene']}")
-    print(f"- Time: {CASE['time']}\n")
+    print("=== Murder Mystery: The Clinic Case ===\n")
+    print("CASE BRIEF:")
+    print("- Victim: Dr. Arjun Mehta, 42, cardiologist at Silverline Hospital.")
+    print("- Scene: Private clinic, found dead late at night. Blunt force head injury.")
+    print("- Evidence: Muddy footprints, laptop activity, CCTV outage, missing USB.\n")
 
     while True:
         suspect = choose_suspect()
@@ -191,8 +154,12 @@ def main():
             break
         question_suspect(suspect)
 
+    # After the player stops questioning suspects
     accuse()
 
 
+# --------------------------------------------
+# Start game
+# --------------------------------------------
 if __name__ == "__main__":
     main()

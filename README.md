@@ -1,36 +1,162 @@
-**﻿MCA Mini Project — Simulating Game Characters with Generative AI**
+# 🕵️ Murder Mystery AI — Interactive Detective Simulation
 
-We are building a murder mystery game where the player can talk to NPCs (non-playable characters).
-Instead of fixed dialogues, these NPCs will use AI (Large Language Models) to answer questions.
-Each NPC will have:
+An AI-driven **murder mystery interrogation game** where players question three suspects in real-time.  
+Each suspect behaves like a human: emotional, defensive, manipulative, or terrified — depending on how you interrogate them.
 
-A personality and backstory.
+This project uses **Gemini** to create dynamic, unscripted conversations with each suspect.  
+No fixed dialogue. No pre-written responses.  
+Players uncover the truth through **confrontation**, **logic**, **evidence**, and **psychological pressure**.
 
-Memory of what was already said.
+---
 
-A possible role in the murder case.
+## 🎮 What This Project Is
 
-The player can ask questions, find contradictions, and try to figure out who the culprit is.
+This is a **console-based detective game** powered by Gemini AI.  
+The storyline:
 
-🎯 Why We Are Doing This
+**Victim:** Dr. Arjun Mehta  
+**Location:** Private clinic  
+**Time of death:** ~11:17 PM  
+**Suspects:**  
+- Nisha Mehta — victim’s wife  
+- Rohit Sharma — junior doctor  
+- Kabir Rao — hospital administrator  
 
-Normal story games (like Telltale) only have pre-written dialogues.
+The player’s goal:  
+**Interrogate all suspects → catch contradictions → identify the killer.**
 
-This makes them less immersive and predictable.
+There is *no* pre-written dialogue — every answer comes from AI using the suspect’s personality, emotional state, lies, secrets, and confrontation history.
 
-With AI, NPCs can respond more naturally and make the story feel unique.
+---
 
-🛠️ Tools We Plan to Use
+## 🧠 How the Game Works (Technical Overview)
 
-Python → backend logic.
+Each suspect has:
 
-React → simple frontend UI (chat-style).
+- A **personality profile**
+- A **guilt truth** (innocent or guilty)
+- An **emotional tier system (0–4)** that escalates with confrontation
+- A **dynamic prompt builder** that changes based on your questions
+- **Confrontation triggers** like:
+  - timeline contradictions  
+  - evidence pressure  
+  - accusing them  
+  - catching them lying  
+  - asking how they know something they shouldn't  
 
-LLMs (GPT-4 / LLaMA / Hugging Face models) → NPC dialogues.
+### The Interrogation Pipeline
 
-PostgreSQL → storing story and character details.
+When you ask a question:
 
-Vector Database (FAISS / Pinecone / AstraDB) → NPC memory.
+1. The game detects whether it’s a confrontation (via regex and keywords).  
+2. Their **emotional state increases**.  
+3. The Behavior Engine chooses the suspect’s emotional reaction style.  
+4. A customized prompt is built using the suspect’s profile + emotional tier.  
+5. Gemini generates a **roleplayed, in-character** response.  
 
+At the end, you make your final accusation.
 
-Git + GitHub → version control.
+The game then reveals whether you caught the killer.
+
+---
+
+# 🚀 Getting Started (Setup Guide)
+
+Follow these steps to run the game on your system.
+
+---
+
+## 1. Clone this repository
+
+```
+git clone https://github.com/<your-username>/<your-repo-name>.git
+cd <your-repo-name>
+```
+
+---
+
+## 2. Create a virtual environment
+
+### Windows:
+```
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+### Mac/Linux:
+```
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+---
+
+## 3. Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+---
+
+## 4. Set up environment variables
+
+Create a `.env` file using:
+
+```
+cp .env.example .env
+```
+
+Then open `.env` and add your Google API key:
+
+```
+GOOGLE_API_KEY=your_actual_key_here
+```
+
+---
+
+## 5. Run the game
+
+```
+python game.py
+```
+
+---
+
+# 🛡️ Security Notes
+
+- `.env` is ignored by git.
+- Never commit your API key.
+- `.env.example` tells collaborators what variable to set up.
+
+---
+
+# 🧱 Project Structure
+
+```
+murder-mystery-ai/
+│
+├── game.py
+├── suspects.py
+├── behavior_engine.py
+├── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+---
+
+# 🤝 Contributing
+
+Feel free to fork the repo and add improvements such as:
+- new suspects
+- new cases
+- GUI support
+- analytics/logging
+- additional evidence logic
+- automated tests
+
+---
+
+# 🕵️ Have fun solving the case!
