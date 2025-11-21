@@ -4,22 +4,22 @@
 # - Confrontation detection
 # - Emotional tier updates
 # - Prompt assembly using MASTER_TEMPLATE
+# - Fully compatible with suspects.py structure
 # ============================================
 
 import re
 from suspects import MASTER_TEMPLATE, SUSPECTS, CT_EFFECTS
 
-
 # ============================================
 # Confrontation Pattern Definitions
 # ============================================
-
 # Confrontation Types:
-# 1 = Timeline
-# 2 = Evidence
+# 1 = Timeline challenge
+# 2 = Evidence confrontation
 # 3 = Knowledge contradiction
 # 4 = Behavior contradiction
 # 5 = Direct accusation
+# 0 = Neutral question
 
 CT_PATTERNS = {
     1: [
@@ -70,25 +70,26 @@ CT_PATTERNS = {
 
 
 # ============================================
-# Detect confrontation type (returns CT number)
+# Detect confrontation type
+# Returns CT number 0–5
 # ============================================
-
 def detect_confrontation(player_message: str) -> int:
+    """Identify confrontation type based on keywords/patterns."""
     msg = player_message.lower()
 
     for ct, patterns in CT_PATTERNS.items():
         for pat in patterns:
             if re.search(pat, msg):
-                return ct  # Return first matched confrontation type
-    
-    return 0  # 0 = normal question, no confrontation
+                return ct
+
+    return 0  # Normal question
 
 
 # ============================================
 # Emotional Tier Update
 # ============================================
-
 def update_emotional_tier(suspect_name: str, current_tier: int) -> int:
+    """Increase emotional tier by 1 up to suspect's max tier."""
     max_tier = SUSPECTS[suspect_name]["max_tier"]
     new_tier = min(current_tier + 1, max_tier)
     return new_tier
@@ -97,22 +98,31 @@ def update_emotional_tier(suspect_name: str, current_tier: int) -> int:
 # ============================================
 # Build Prompt for Gemini
 # ============================================
+def build_prompt(
+    suspect_name: str,
+    emotional_tier: int,
+    ct: int,
+    player_message: str
+) -> str:
+    """
+    Fills the MASTER_TEMPLATE with all necessary suspect information.
+    This function is extremely sensitive to template structure—
+    do NOT modify the variable names unless suspects.py changes.
+    """
 
-def build_prompt(suspect_name: str, emotional_tier: int, ct: int, player_message: str) -> str:
-    """Fill the MASTER_TEMPLATE with suspect-specific and confrontation-specific data."""
-    
     suspect = SUSPECTS[suspect_name]
 
     # Emotional tier description
     tier_desc = suspect["tiers"][emotional_tier]
 
-    # Confrontation behavior description (if confrontation)
+    # Confrontation behavior description
     if ct == 0:
         ct_desc = "Normal question; respond in character without escalation."
     else:
+        # Safe: CT_EFFECTS maps exactly {suspect_name: {ct: desc}}
         ct_desc = CT_EFFECTS[suspect_name][ct]
 
-    # Fill the master template
+    # Fill master template safely — exact key names from suspects.py
     prompt = MASTER_TEMPLATE.format(
         SUSPECT_NAME=suspect_name,
         ROLE=suspect["role"],

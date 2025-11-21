@@ -4,13 +4,17 @@
 # - suspect interaction
 # - confrontation detection
 # - emotional tier escalation
+# - automatic clue extraction
+# - notes system integration
 # - Gemini LLM calls
 # ============================================
 
 import os
 from dotenv import load_dotenv
+
 from suspects import SUSPECTS
 from behavior_engine import detect_confrontation, update_emotional_tier, build_prompt
+from notes_engine import detect_notes, show_notes
 
 # --------------------------------------------
 # Load API KEY
@@ -48,45 +52,57 @@ def list_suspects():
     print("\nSuspects:")
     print("1. Nisha Mehta – Victim's wife")
     print("2. Rohit Sharma – Junior doctor")
-    print("3. Kabir Rao – Hospital administrator")
-    print()
+    print("3. Kabir Rao – Hospital administrator\n")
 
 
 def choose_suspect():
+    """Menu for selecting a suspect to interrogate."""
     while True:
         list_suspects()
-        choice = input("Talk to which suspect? (1/2/3, or 'q' to stop questioning): ").strip()
+        choice = input("Talk to which suspect? (1/2/3, 'n' for notes, 'q' to stop questioning): ").strip().lower()
 
-        if choice.lower() == "q":
+        if choice == "q":
             return None
 
-        if choice in ["1", "2", "3"]:
-            mapping = {"1": "Nisha", "2": "Rohit", "3": "Kabir"}
+        if choice in ["n", "notes"]:
+            show_notes()
+            continue
+
+        mapping = {"1": "Nisha", "2": "Rohit", "3": "Kabir"}
+        if choice in mapping:
             return mapping[choice]
 
-        print("Invalid choice. Try again.")
+        print("Invalid choice. Try again.\n")
 
 
 # --------------------------------------------
 # Interrogation loop
 # --------------------------------------------
 def question_suspect(name: str):
-    print(f"\nYou are now talking to {name}. Type your questions.\nType 'back' to stop.\n")
+    """Handles full conversation flow with a suspect."""
+    print(f"\nYou are now talking to {name}.")
+    print("Type your questions below.")
+    print("Type 'back' to stop. Type 'n' to view notes.\n")
 
     while True:
         player_message = input("You: ").strip()
+
+        # Notes access inside interrogation
+        if player_message.lower() in ["n", "notes"]:
+            show_notes()
+            continue
 
         if player_message.lower() == "back":
             print(f"\nLeaving {name}.\n")
             break
 
-        # 1) Detect confrontation
+        # 1) Detect confrontation type
         ct = detect_confrontation(player_message)
 
         # 2) Update emotional tier
         suspect_state[name] = update_emotional_tier(name, suspect_state[name])
 
-        # 3) Build LLM prompt
+        # 3) Build system prompt for AI
         prompt = build_prompt(
             name,
             emotional_tier=suspect_state[name],
@@ -94,17 +110,19 @@ def question_suspect(name: str):
             player_message=player_message
         )
 
-        # 4) Call Gemini
+        # 4) Get suspect's AI-generated reply
         reply = call_gemini(prompt)
+        print(f"\n{name}: {reply}\n")
 
-        # 5) Print response
-        print(f"{name}: {reply}\n")
+        # 5) Detect clues in reply and add to notes
+        detect_notes(name, reply)
 
 
 # --------------------------------------------
 # Accuse mechanic
 # --------------------------------------------
 def accuse():
+    """Allows the player to accuse a suspect."""
     print("\nTime to make your accusation!")
     print("Who do you think is the killer?\n")
     print("1. Nisha")
@@ -129,7 +147,6 @@ def accuse():
             break
 
     print("\n=== VERDICT ===")
-
     if accused == killer:
         print(f"Correct! {accused} was indeed the killer.\n")
     else:
@@ -142,6 +159,7 @@ def accuse():
 # Main Game Loop
 # --------------------------------------------
 def main():
+    """Main game controller: menus, navigation, interrogation access."""
     print("=== Murder Mystery: The Clinic Case ===\n")
     print("CASE BRIEF:")
     print("- Victim: Dr. Arjun Mehta, 42, cardiologist at Silverline Hospital.")
@@ -149,13 +167,32 @@ def main():
     print("- Evidence: Muddy footprints, laptop activity, CCTV outage, missing USB.\n")
 
     while True:
-        suspect = choose_suspect()
-        if suspect is None:
-            break
-        question_suspect(suspect)
+        print("Choose an option:")
+        print("1. Interrogate a suspect")
+        print("2. View Notes")
+        print("3. Accuse the killer")
+        print("4. Quit\n")
 
-    # After the player stops questioning suspects
-    accuse()
+        choice = input("Enter choice: ").strip().lower()
+
+        if choice == "1":
+            suspect = choose_suspect()
+            if suspect:
+                question_suspect(suspect)
+
+        elif choice in ["2", "n", "notes"]:
+            show_notes()
+
+        elif choice == "3":
+            accuse()
+            break
+
+        elif choice in ["4", "q"]:
+            print("\nExiting the game. Goodbye.\n")
+            break
+
+        else:
+            print("Invalid option. Try again.\n")
 
 
 # --------------------------------------------
