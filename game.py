@@ -6,6 +6,7 @@
 # - emotional tier escalation
 # - automatic clue extraction
 # - notes system integration
+# - investigation system integration
 # - Gemini LLM calls
 # ============================================
 
@@ -15,6 +16,7 @@ from dotenv import load_dotenv
 from suspects import SUSPECTS
 from behavior_engine import detect_confrontation, update_emotional_tier, build_prompt
 from notes_engine import detect_notes, show_notes
+from investigation_engine import investigate
 
 # --------------------------------------------
 # Load API KEY
@@ -22,6 +24,7 @@ from notes_engine import detect_notes, show_notes
 load_dotenv()
 from google import genai
 client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+
 
 # --------------------------------------------
 # Gemini call function
@@ -36,7 +39,7 @@ def call_gemini(prompt: str) -> str:
 
 
 # --------------------------------------------
-# Game state (emotional tiers for each suspect)
+# Game state (emotional tiers)
 # --------------------------------------------
 suspect_state = {
     "Nisha": 0,
@@ -46,7 +49,7 @@ suspect_state = {
 
 
 # --------------------------------------------
-# Suspect selection UI
+# Suspect selection
 # --------------------------------------------
 def list_suspects():
     print("\nSuspects:")
@@ -87,7 +90,7 @@ def question_suspect(name: str):
     while True:
         player_message = input("You: ").strip()
 
-        # Notes access inside interrogation
+        # Notes access
         if player_message.lower() in ["n", "notes"]:
             show_notes()
             continue
@@ -96,13 +99,13 @@ def question_suspect(name: str):
             print(f"\nLeaving {name}.\n")
             break
 
-        # 1) Detect confrontation type
+        # Detect confrontation
         ct = detect_confrontation(player_message)
 
-        # 2) Update emotional tier
+        # Emotional escalation
         suspect_state[name] = update_emotional_tier(name, suspect_state[name])
 
-        # 3) Build system prompt for AI
+        # Build LLM prompt
         prompt = build_prompt(
             name,
             emotional_tier=suspect_state[name],
@@ -110,11 +113,11 @@ def question_suspect(name: str):
             player_message=player_message
         )
 
-        # 4) Get suspect's AI-generated reply
+        # AI reply
         reply = call_gemini(prompt)
         print(f"\n{name}: {reply}\n")
 
-        # 5) Detect clues in reply and add to notes
+        # Auto-detect clues
         detect_notes(name, reply)
 
 
@@ -130,7 +133,6 @@ def accuse():
     print("3. Kabir\n")
 
     choice = input("Your accusation (1/2/3): ").strip()
-
     mapping = {"1": "Nisha", "2": "Rohit", "3": "Kabir"}
 
     if choice not in mapping:
@@ -139,12 +141,8 @@ def accuse():
 
     accused = mapping[choice]
 
-    # Identify the real killer
-    killer = None
-    for s in SUSPECTS:
-        if SUSPECTS[s]["is_killer"]:
-            killer = s
-            break
+    # Identify killer
+    killer = next(s for s in SUSPECTS if SUSPECTS[s]["is_killer"])
 
     print("\n=== VERDICT ===")
     if accused == killer:
@@ -159,19 +157,20 @@ def accuse():
 # Main Game Loop
 # --------------------------------------------
 def main():
-    """Main game controller: menus, navigation, interrogation access."""
+    """Main game controller."""
     print("=== Murder Mystery: The Clinic Case ===\n")
     print("CASE BRIEF:")
     print("- Victim: Dr. Arjun Mehta, 42, cardiologist at Silverline Hospital.")
-    print("- Scene: Private clinic, found dead late at night. Blunt force head injury.")
-    print("- Evidence: Muddy footprints, laptop activity, CCTV outage, missing USB.\n")
+    print("- Scene: Found dead late at night. Blunt force trauma.")
+    print("- Evidence: Footprints, laptop activity, CCTV outage, missing USB.\n")
 
     while True:
         print("Choose an option:")
         print("1. Interrogate a suspect")
         print("2. View Notes")
-        print("3. Accuse the killer")
-        print("4. Quit\n")
+        print("3. Investigate Evidence")
+        print("4. Accuse the killer")
+        print("5. Quit\n")
 
         choice = input("Enter choice: ").strip().lower()
 
@@ -184,10 +183,13 @@ def main():
             show_notes()
 
         elif choice == "3":
+            investigate()
+
+        elif choice == "4":
             accuse()
             break
 
-        elif choice in ["4", "q"]:
+        elif choice in ["5", "q"]:
             print("\nExiting the game. Goodbye.\n")
             break
 
