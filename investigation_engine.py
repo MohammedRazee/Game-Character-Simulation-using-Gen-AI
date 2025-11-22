@@ -44,8 +44,8 @@ def check_footprints():
     ]
 
     for text, cat in clues:
-        print(f"• {text}")     # <-- ALWAYS show clue in game
-        add_note(text, category=cat)   # <-- Still logs to notes only if new
+        print(f"• {text}")
+        add_note(text, category=cat)
 
 
     # Unlock: Window + footprints imply escape route
@@ -72,6 +72,7 @@ def check_laptop():
     ]
 
     for text, cat in clues:
+        print(f"• {text}")
         add_note(text, category=cat)
 
     if not UNLOCKED["usb_port"]:
@@ -95,6 +96,7 @@ def check_window():
     ]
 
     for text, cat in clues:
+        print(f"• {text}")
         add_note(text, category=cat)
 
     # Connection to footprints is purely conceptual in notes; no new unlock.
@@ -116,6 +118,7 @@ def check_coffee_mug():
     ]
 
     for text, cat in clues:
+        print(f"• {text}")
         add_note(text, category=cat)
 
 
@@ -135,6 +138,7 @@ def check_photo_frame():
     ]
 
     for text, cat in clues:
+        print(f"• {text}")
         add_note(text, category=cat)
 
     if not UNLOCKED["drawer"]:
@@ -158,6 +162,7 @@ def check_clinic_room():
     ]
 
     for text, cat in clues:
+        print(f"• {text}")
         add_note(text, category=cat)
 
 
@@ -177,6 +182,7 @@ def check_drawer():
     ]
 
     for text, cat in clues:
+        print(f"• {text}")
         add_note(text, category=cat)
 
 
@@ -194,6 +200,7 @@ def check_usb_port():
     ]
 
     for text, cat in clues:
+        print(f"• {text}")
         add_note(text, category=cat)
 
 
@@ -213,6 +220,7 @@ def check_corridor_camera():
     ]
 
     for text, cat in clues:
+        print(f"• {text}")
         add_note(text, category=cat)
 
 
