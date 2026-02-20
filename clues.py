@@ -7,6 +7,7 @@ from typing import List, Optional
 @dataclass
 class Clue:
     """Represents a single clue extracted from a suspect conversation."""
+
     id: int
     source: str  # e.g. suspect name: "Kabir Rao"
     summary: str  # short, human-readable note
@@ -15,6 +16,7 @@ class Clue:
 @dataclass
 class Notebook:
     """Stores and formats all clues discovered by the player."""
+
     clues: List[Clue] = field(default_factory=list)
 
     def add_clue(self, source: str, summary: str) -> Optional[Clue]:

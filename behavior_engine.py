@@ -29,7 +29,7 @@ CT_PATTERNS = {
         r"\b11:",
         r"\b10:",
         r"your story doesn't match",
-        r"your timeline"
+        r"your timeline",
     ],
     2: [
         r"footprint",
@@ -44,28 +44,28 @@ CT_PATTERNS = {
         r"record",
         r"clock",
         r"photo frame",
-        r"fingerprint"
+        r"fingerprint",
     ],
     3: [
         r"how do you know",
         r"you shouldn't know",
         r"only the killer would know",
-        r"how would you know"
+        r"how would you know",
     ],
     4: [
         r"contradiction",
         r"earlier you said",
         r"you said something else",
         r"changing your story",
-        r"that's not what you said"
+        r"that's not what you said",
     ],
     5: [
         r"you killed",
         r"you murdered",
         r"you're the killer",
         r"you did it",
-        r"you are the murderer"
-    ]
+        r"you are the murderer",
+    ],
 }
 
 
@@ -99,10 +99,7 @@ def update_emotional_tier(suspect_name: str, current_tier: int) -> int:
 # Build Prompt for Gemini
 # ============================================
 def build_prompt(
-    suspect_name: str,
-    emotional_tier: int,
-    ct: int,
-    player_message: str
+    suspect_name: str, emotional_tier: int, ct: int, player_message: str
 ) -> str:
     """
     Fills the MASTER_TEMPLATE with all necessary suspect information.
@@ -133,7 +130,7 @@ def build_prompt(
         CURRENT_EMOTIONAL_TIER=emotional_tier,
         EMOTIONAL_TIER_DESCRIPTION=tier_desc,
         CONFRONTATION_BEHAVIOR_DESCRIPTION=ct_desc,
-        PLAYER_MESSAGE=player_message
+        PLAYER_MESSAGE=player_message,
     )
 
     return prompt

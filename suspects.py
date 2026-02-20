@@ -74,14 +74,14 @@ Now respond as {SUSPECT_NAME}.
 NISHA_TIERS = {
     0: "Calm but sad, soft-spoken, trying to stay composed.",
     1: "Tearful, emotionally overwhelmed, defensive, rambling.",
-    2: "Panic and emotional collapse; admits unrelated secrets such as being near the clinic or marital issues."
+    2: "Panic and emotional collapse; admits unrelated secrets such as being near the clinic or marital issues.",
 }
 
 KABIR_TIERS = {
     0: "Nervous and fidgety; trying to appear professional.",
     1: "Defensive, raises voice slightly, shifts blame (usually toward Rohit).",
     2: "Panic lies, contradicts previous statements, sweating energy.",
-    3: "Full meltdown; confesses unrelated wrongdoing (like embezzlement) but insists he didn't kill anyone."
+    3: "Full meltdown; confesses unrelated wrongdoing (like embezzlement) but insists he didn't kill anyone.",
 }
 
 ROHIT_TIERS = {
@@ -89,7 +89,7 @@ ROHIT_TIERS = {
     1: "Slight irritation; clipped answers; forced calmness.",
     2: "Logic cracks; evasive explanations; subtle contradictions.",
     3: "Irritated, brittle logic, defensive tone.",
-    4: "Emotional cracking, scattered answers, near-confession (but never full confession)."
+    4: "Emotional cracking, scattered answers, near-confession (but never full confession).",
 }
 
 
@@ -103,22 +103,22 @@ CT_EFFECTS = {
         2: "Evidence confrontation: Emotional breakdown, reveals unrelated secrets while defending innocence.",
         3: "Knowledge contradiction: Confused, denies knowing anything she shouldn't.",
         4: "Behavior contradiction: Melts down and admits emotional truths.",
-        5: "Direct accusation: Heartbroken denial, crying, insists she loved her husband."
+        5: "Direct accusation: Heartbroken denial, crying, insists she loved her husband.",
     },
     "Kabir": {
         1: "Timeline confrontation: Stammers; slips that he returned to the clinic at 11:25.",
         2: "Evidence confrontation (footprints): Lies badly at first, then panics.",
         3: "Knowledge contradiction: Backtracks, claims bad memory, contradicts himself.",
         4: "Behavior contradiction: Full panic, chaotic explanations.",
-        5: "Direct accusation: Outrage mixed with fear; denies with trembling voice."
+        5: "Direct accusation: Outrage mixed with fear; denies with trembling voice.",
     },
     "Rohit": {
         1: "Timeline confrontation: Over-logical justification with small cracks appearing.",
         2: "Evidence confrontation: Offers alternative explanations; tone sharpens.",
         3: "Knowledge contradiction: Backpedals, gives flimsy excuse for knowing restricted info.",
         4: "Behavior contradiction: Irritated denial ('I never said that').",
-        5: "Direct accusation: Cold, controlled denial; cracks at higher emotional tiers."
-    }
+        5: "Direct accusation: Cold, controlled denial; cracks at higher emotional tiers.",
+    },
 }
 
 
@@ -134,7 +134,7 @@ SUSPECTS = {
         "hidden_motives": "Found affair texts, lied about being near the clinic, forged his signature for a loan.",
         "is_killer": False,
         "max_tier": 2,
-        "tiers": NISHA_TIERS
+        "tiers": NISHA_TIERS,
     },
     "Kabir": {
         "role": "Hospital Administrator",
@@ -143,7 +143,7 @@ SUSPECTS = {
         "hidden_motives": "Embezzling small amounts, returned to clinic at 11:25, saw body and ran.",
         "is_killer": False,
         "max_tier": 3,
-        "tiers": KABIR_TIERS
+        "tiers": KABIR_TIERS,
     },
     "Rohit": {
         "role": "Junior Doctor",
@@ -152,6 +152,6 @@ SUSPECTS = {
         "hidden_motives": "Altered patient records, about to be exposed, logged into the victim's laptop, stole the USB.",
         "is_killer": True,
         "max_tier": 4,
-        "tiers": ROHIT_TIERS
-    }
+        "tiers": ROHIT_TIERS,
+    },
 }
